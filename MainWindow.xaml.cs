@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MatchGame
 {
@@ -20,22 +21,40 @@ namespace MatchGame
     /// </summary>
     public partial class MainWindow : Window
     {
-        List <string> choices ;
+        bool isFirstSelection;
         TextBlock firstSelectedTextBlock;
+
+        DispatcherTimer timer = new DispatcherTimer();
+        int tenthsofSecondsElapsed;
+        int matchesFound;
 
         public MainWindow()
         {
-            choices = new List<string>();
-
-            firstSelectedTextBlock = new TextBlock();
-
             InitializeComponent();
+
+            timer.Interval = TimeSpan.FromSeconds(.1);
+            timer.Tick += Timer_Tick;
 
             SetUpGame();
         }
 
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            tenthsofSecondsElapsed++;
+            timeTextBlock.Text = (tenthsofSecondsElapsed / 10F).ToString("0.0s");
+            if (matchesFound == 8)
+            {
+                timer.Stop();
+                timeTextBlock.Text = timeTextBlock.Text + " -Play Again?";
+            }
+        }
+
         private void SetUpGame()
         {
+            isFirstSelection = true;
+
+            firstSelectedTextBlock = new TextBlock();
+
             List<string> animalEmoji = new List<string>()
             {
                 "🐙","🐙",
@@ -52,36 +71,51 @@ namespace MatchGame
 
             foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>()) 
             {
-                int index = random.Next(animalEmoji.Count);
-                string nextEmoji = animalEmoji[index];
-                textBlock.Text = nextEmoji;
-                animalEmoji.RemoveAt(index);
+                if (textBlock.Name != "timeTextBlock")
+                {
+                    textBlock.Visibility = Visibility.Visible;
+                    int index = random.Next(animalEmoji.Count);
+                    string nextEmoji = animalEmoji[index];
+                    textBlock.Text = nextEmoji;
+                    animalEmoji.RemoveAt(index);
+                }
             }
+
+            timer.Start();
+            tenthsofSecondsElapsed = 0;
+            matchesFound = 0;
         }
 
         
         private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (choices.Count == 0)
+            if (isFirstSelection)
             {
                 firstSelectedTextBlock = (TextBlock)sender;
-                choices.Add(firstSelectedTextBlock.Text);
                 firstSelectedTextBlock.Visibility = Visibility.Hidden;
+                isFirstSelection = false;
             }
             else
             {
                 TextBlock secondSelectedTextBlock = (TextBlock)sender;
-                if (secondSelectedTextBlock.Text.Equals(choices[0]))
+                if (secondSelectedTextBlock.Text.Equals(firstSelectedTextBlock.Text))
                 {
                     secondSelectedTextBlock.Visibility = Visibility.Hidden;
-                    firstSelectedTextBlock = new TextBlock();
-                    choices.RemoveAt(0);
+                    matchesFound++;                    
                 }
                 else 
                 {
                     firstSelectedTextBlock.Visibility = Visibility.Visible;
-                    choices.RemoveAt(0);                    
                 }
+                isFirstSelection = true;
+            }
+        }
+
+        private void timeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (matchesFound == 8)
+            {
+                SetUpGame();
             }
         }
     }
