@@ -20,8 +20,15 @@ namespace MatchGame
     /// </summary>
     public partial class MainWindow : Window
     {
+        List <string> choices ;
+        TextBlock firstSelectedTextBlock;
+
         public MainWindow()
         {
+            choices = new List<string>();
+
+            firstSelectedTextBlock = new TextBlock();
+
             InitializeComponent();
 
             SetUpGame();
@@ -49,6 +56,32 @@ namespace MatchGame
                 string nextEmoji = animalEmoji[index];
                 textBlock.Text = nextEmoji;
                 animalEmoji.RemoveAt(index);
+            }
+        }
+
+        
+        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (choices.Count == 0)
+            {
+                firstSelectedTextBlock = (TextBlock)sender;
+                choices.Add(firstSelectedTextBlock.Text);
+                firstSelectedTextBlock.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                TextBlock secondSelectedTextBlock = (TextBlock)sender;
+                if (secondSelectedTextBlock.Text.Equals(choices[0]))
+                {
+                    secondSelectedTextBlock.Visibility = Visibility.Hidden;
+                    firstSelectedTextBlock = new TextBlock();
+                    choices.RemoveAt(0);
+                }
+                else 
+                {
+                    firstSelectedTextBlock.Visibility = Visibility.Visible;
+                    choices.RemoveAt(0);                    
+                }
             }
         }
     }
